@@ -148,7 +148,6 @@ void draw(){
 }
 
 void removeLine(){
-    """Remove full lines"""
     int i,j;
     for (i = H-2 ; i > 0 ; i-- ){
         for (j = 0 ; j < W ; j++)
