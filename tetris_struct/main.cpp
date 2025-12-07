@@ -10,52 +10,56 @@ using namespace std;
 #define W 15
 char board[H][W] = {};
 
-int x, y, b;
+// --- [NEW] Add variables for next block and score ---
+int x, y, b, next_b; 
+int score = 0;
+// ----------------------------------------------------
+
 char blocks[][4][4] ={
-        {{' ','I',' ',' '},
-         {' ','I',' ',' '},
-         {' ','I',' ',' '},
-         {' ','I',' ',' '}},
-        {{' ',' ',' ',' '},
-         {'I','I','I','I'},
-         {' ',' ',' ',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','O','O',' '},
-         {' ','O','O',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','T',' ',' '},
-         {'T','T','T',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ','S','S',' '},
-         {'S','S',' ',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {'Z','Z',' ',' '},
-         {' ','Z','Z',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {'J',' ',' ',' '},
-         {'J','J','J',' '},
-         {' ',' ',' ',' '}},
-        {{' ',' ',' ',' '},
-         {' ',' ','L',' '},
-         {'L','L','L',' '},
-         {' ',' ',' ',' '}}
+    {{' ','I',' ',' '},
+     {' ','I',' ',' '},
+     {' ','I',' ',' '},
+     {' ','I',' ',' '}},
+    {{' ',' ',' ',' '},
+     {'I','I','I','I'},
+     {' ',' ',' ',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {' ','O','O',' '},
+     {' ','O','O',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {' ','O','O',' '},
+     {' ','O','O',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {' ','O','O',' '},
+     {' ','O','O',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {' ','O','O',' '},
+     {' ','O','O',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {' ','T',' ',' '},
+     {'T','T','T',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {' ','S','S',' '},
+     {'S','S',' ',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {'Z','Z',' ',' '},
+     {' ','Z','Z',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {'J',' ',' ',' '},
+     {'J','J','J',' '},
+     {' ',' ',' ',' '}},
+    {{' ',' ',' ',' '},
+     {' ',' ','L',' '},
+     {'L','L','L',' '},
+     {' ',' ',' ',' '}}
 };
 
 // macOS-compatible kbhit() replacement
@@ -139,38 +143,73 @@ void initBoard(){
             else board[i][j] = ' ';
 }
 
+// --- [UPDATED] Draw function to display Next Block and Score ---
 void draw(){
     // Clear screen (macOS compatible)
     cout << "\033[2J\033[1;1H";
 
-    for (int i = 0 ; i < H ; i++, cout<<endl)
-        for (int j = 0 ; j < W ; j++) cout<<board[i][j];
-}
+    // Display score at the top
+    cout << "Score: " << score << endl;
 
+    for (int i = 0 ; i < H ; i++){
+        // 1. Draw the current row of the board
+        for (int j = 0 ; j < W ; j++) cout << board[i][j];
+        
+        // 2. Draw the information panel on the side (Next Block)
+        // Row 2: Print "Next:" label
+        if (i == 2) cout << "\tNext:";
+        
+        // Rows 3 to 6: Print the shape of the next block (next_b)
+        else if (i >= 3 && i < 7) {
+            cout << "\t"; // Tab for alignment
+            for (int k = 0; k < 4; k++) {
+                cout << blocks[next_b][i-3][k];
+            }
+        }
+        
+        // Newline after drawing one horizontal row
+        cout << endl;
+    }
+}
+// ----------------------------------------------------------
+
+// --- [UPDATED] Function to remove lines and update score ---
 void removeLine(){
+    // Check and remove full lines (Line Clearance)
     int i,j;
     for (i = H-2 ; i > 0 ; i-- ){
         for (j = 0 ; j < W ; j++)
             if (board[i][j] == ' ') break;
         if (j == W){
+            // If line is full, shift lines down
             for (int ii = i ; ii > 0 ; ii--)
                 for (int jj = 0; jj < W; jj++)
                     board[ii][jj] = board[ii-1][jj];
-            i++;
-            draw();
-            usleep(200000); // 200ms in microseconds
+            
+            score += 100; // Add 100 points for each cleared line
+            
+            i++; // Re-check current line (since upper lines dropped down)
+            draw(); // Redraw to create effect
+            usleep(200000); 
         }
     }
 }
+// ----------------------------------------------------------
 
 int main()
 {
     srand(time(0));
-    x = 5; y = 0; b = rand()%7;
+    
+    // --- [UPDATED] Initialize first block and next block ---
+    next_b = rand() % 7; // Randomize next block
+    b = rand() % 7;      // Randomize current block
+    // ----------------------------------------------------------
+    
+    x = 5; y = 0; 
     initBoard();
 
     cout << "Tetris Game - Controls: a=left, d=right, x=down, q=quit" << endl;
-    usleep(1000000); // Show instructions for 1 second
+    usleep(1000000); 
 
     while (1){
         boardDelBlock();
@@ -181,17 +220,24 @@ int main()
             if (c == 'x' && canMove( 0,1)) y++;
             if (c == 'q') break;
         }
+        
         if (canMove(0,1)) y++;
         else{
             block2Board();
             removeLine();
-            x = 5; y = 0; b = rand()%7;
+            
+            // --- [UPDATED] Logic to bring next block into play ---
+            b = next_b;        // Move next block to current
+            next_b = rand()%7; // Generate new next block
+            x = 5; y = 0;      // Reset starting position
+            // ----------------------------------------------------
         }
+        
         block2Board();
         draw();
-        usleep(500000); // 500ms in microseconds
+        usleep(300000); // Increase game speed slightly (300ms) for smoothness
     }
 
-    cout << "Game Over!" << endl;
+    cout << "Game Over! Final Score: " << score << endl;
     return 0;
 }
