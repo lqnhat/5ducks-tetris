@@ -58,6 +58,9 @@ char blocks[][4][4] ={
          {' ',' ',' ',' '}}
 };
 
+void playBackground();
+void playSound(const char* filename);
+
 // macOS-compatible kbhit() replacement
 int kbhit() {
     struct termios oldt, newt;
@@ -148,12 +151,13 @@ void draw(){
 }
 
 void removeLine(){
-    """Remove full lines"""
     int i,j;
     for (i = H-2 ; i > 0 ; i-- ){
         for (j = 0 ; j < W ; j++)
             if (board[i][j] == ' ') break;
         if (j == W){
+            playSound("clear_lines_01.wav");
+            
             for (int ii = i ; ii > 0 ; ii--)
                 for (int jj = 0; jj < W; jj++)
                     board[ii][jj] = board[ii-1][jj];
@@ -164,9 +168,22 @@ void removeLine(){
     }
 }
 
+// Integration sound
+void playBackground() {
+    system("afplay background_sound_01.mp3 -v 0.5 &");
+}
+
+void playSound(const char* filename) {
+    string cmd = string("afplay ") + filename + " &";
+    system(cmd.c_str());
+}
+
+
+
 int main()
 {
     srand(time(0));
+    playBackground();
     x = 5; y = 0; b = rand()%7;
     initBoard();
 
@@ -184,6 +201,7 @@ int main()
         }
         if (canMove(0,1)) y++;
         else{
+            playSound("landing_01.wav");
             block2Board();
             removeLine();
             x = 5; y = 0; b = rand()%7;
@@ -194,5 +212,7 @@ int main()
     }
 
     cout << "Game Over!" << endl;
+    playSound("game_over_01.mp3");
+    
     return 0;
 }
